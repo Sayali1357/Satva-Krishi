@@ -1,4 +1,3 @@
-// src/components/Cart.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -7,12 +6,10 @@ const Cart = () => {
   const navigate = useNavigate();
   const [total, setTotal] = useState(0);
 
-  // Load Cart Data from localStorage
+  // Load Cart Data from localStorage on Initial Render
   useEffect(() => {
     const cartItems = JSON.parse(localStorage.getItem("cart")) || [];
     setCart(cartItems);
-
-    // Calculate Total Price
     calculateTotal(cartItems);
   }, []);
 
@@ -46,7 +43,7 @@ const Cart = () => {
       .filter((item) => item.quantity > 0);
 
     setCart(updatedCart);
-    localStorage.setItem("Cart", JSON.stringify(updatedCart));
+    localStorage.setItem("cart", JSON.stringify(updatedCart)); // Corrected here
     calculateTotal(updatedCart);
   };
 
@@ -78,12 +75,14 @@ const Cart = () => {
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <h1 className="text-3xl font-bold text-center mb-8">🛒 Your Cart</h1>
 
+      {/* Empty Cart Message */}
       {cart.length === 0 ? (
         <p className="text-center text-gray-500 text-lg">
           🛑 Your cart is empty. Add items to continue!
         </p>
       ) : (
         <div className="space-y-6">
+          {/* Cart Items Loop */}
           {cart.map((item, index) => (
             <div
               key={index}

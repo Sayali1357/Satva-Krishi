@@ -2,68 +2,42 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProducts } from "../api/productApi";
-import product1 from "../assets/images/product-1.png";
-import product2 from "../assets/images/product-2.png";
-import product3 from "../assets/images/product-3.png";
-import product4 from "../assets/images/product-4.png";
-import product5 from "../assets/images/product-5.png";
-import product6 from "../assets/images/product-6.png";
-import product7 from "../assets/images/product-7.jpg";
-import product8 from "../assets/images/product-8.jpg";
-
-// Product Data Array
-const productData = [
-  { id: 1, name: "Basmati Rice", price: 120, category: "grains", imgUrl: product1 },
-  { id: 2, name: "Wheat", price: 85, category: "grains", imgUrl: product2 },
-  { id: 3, name: "Toor Beans", price: 150, category: "pulses", imgUrl: product3 },
-  { id: 4, name: "MoongDal", price: 95, category: "pulses", imgUrl: product4 },
-  { id: 5, name: "Mango", price: 70, category: "fruits", imgUrl: product5 },
-  { id: 6, name: "Banana", price: 30, category: "fruits", imgUrl: product6 },
-  { id: 7, name: "Tomato", price: 40, category: "vegetables", imgUrl: product7 },
-  { id: 8, name: "Potato", price: 35, category: "vegetables", imgUrl: product8 },
-];
 
 const Product = () => {
-  // State to Manage Filtered Products
-  const [filteredProducts, setFilteredProducts] = useState(productData);
+  // State to Manage Products
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
 
   // Navigation Hook
   const navigate = useNavigate();
 
-  // Handle Filter Products
-  const filterProducts = (category) => {
-    setActiveCategory(category);
-    if (category === "all") {
-      setFilteredProducts(productData);
-    } else {
-      const filtered = productData.filter(
-        (product) => product.category === category
-      );
-      setFilteredProducts(filtered);
-    }
-  };
-
   // Load Products Initially
-  useEffect(() => {
-    filterProducts("all");
-  }, []);
-  const [products, setProducts] = useState([]);
-
   useEffect(() => {
     loadProducts();
   }, []);
 
+  // Load Products from Firebase
   const loadProducts = async () => {
     const productList = await getProducts();
     setProducts(productList);
+    setFilteredProducts(productList); // Initially show all products
   };
 
-  // Handle Show Details
+  // Filter Products Based on Category
+  const filterProducts = (category) => {
+    setActiveCategory(category);
+    if (category === "all") {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter((product) => product.category === category);
+      setFilteredProducts(filtered);
+    }
+  };
+
+  // Show Product Details
   const showProductDetails = (product) => {
-    // Save selected product in localStorage
-    localStorage.setItem("selectedProduct", JSON.stringify(product));
-    // Navigate to ProductDashboard
+    localStorage.setItem("selectedProductId", product.id); // Save product ID
     navigate("/ProductDashboard");
   };
 

@@ -1,4 +1,4 @@
-import { db } from "../config/firebase";
+import { db } from "../firebase";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 
 // Add Tracking Data

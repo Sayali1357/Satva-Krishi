@@ -1,5 +1,5 @@
-import { db } from "../config/firebase";
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
+import { collection, addDoc, getDocs, getDoc, doc } from "firebase/firestore";
 
 // Add Product
 export const addProduct = async (productData) => {
@@ -19,4 +19,19 @@ export const getProducts = async () => {
     id: doc.id,
     ...doc.data(),
   }));
+};
+
+// ✅ Get Product By ID
+export const getProductById = async (id) => {
+  try {
+    const productDoc = await getDoc(doc(db, "products", id));
+    if (productDoc.exists()) {
+      return { id: productDoc.id, ...productDoc.data() };
+    } else {
+      throw new Error("Product not found");
+    }
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    return null;
+  }
 };

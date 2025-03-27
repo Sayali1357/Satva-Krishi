@@ -1,7 +1,8 @@
 // src/components/ProductDashboard.js
 import React, { useEffect, useState } from "react";
+import { getProductById } from "../api/productApi";
 
-// Farmer and Nutrition Data
+// Dummy Data for Farmers and Nutrition (Backup in case of API failure)
 const farmerData = {
   1: "Ramesh Patil",
   2: "Sunil Sharma",
@@ -29,17 +30,33 @@ const ProductDashboard = () => {
   const [quantity, setQuantity] = useState(1);
   const [total, setTotal] = useState(0);
 
-  // Load Selected Product from localStorage
+  // Fetch Product from Firebase using ID from localStorage
   useEffect(() => {
-    const selectedProduct = JSON.parse(localStorage.getItem("selectedProduct"));
-    if (selectedProduct) {
-      setProduct(selectedProduct);
-      setTotal(selectedProduct.price); // Initial total for 1 quantity
+    const selectedProductId = localStorage.getItem("selectedProductId");
+    if (selectedProductId) {
+      fetchProduct(selectedProductId);
     } else {
-      alert("❗ No product selected. Redirecting to Home...");
+      alert("❗ No product selected. Redirecting to Products...");
       window.location.href = "/product";
     }
   }, []);
+
+  // Fetch product by ID
+  const fetchProduct = async (id) => {
+    try {
+      const productData = await getProductById(id);
+      if (productData) {
+        setProduct(productData);
+        setTotal(productData.price); // Initial price for 1 quantity
+      } else {
+        alert("❗ Product not found. Redirecting to Products...");
+        window.location.href = "/product";
+      }
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      alert("❗ Error fetching product data.");
+    }
+  };
 
   // Update Total Price when Quantity Changes
   useEffect(() => {
@@ -104,7 +121,8 @@ const ProductDashboard = () => {
         <div className="w-full md:w-2/3 p-6">
           <h2 className="text-2xl font-semibold mb-2">{product.name}</h2>
           <p className="text-gray-600">
-            <strong>👨‍🌾 Farmer Name:</strong> {farmerData[product.id]}
+            <strong>👨‍🌾 Farmer Name:</strong>{" "}
+            {farmerData[product.id] || "Unknown Farmer"}
           </p>
           <p className="text-gray-600 mt-2">
             <strong>💸 Price:</strong> ₹{product.price.toFixed(2)}
@@ -113,9 +131,11 @@ const ProductDashboard = () => {
             <strong>🌱 Nutritious Information:</strong>
           </p>
           <ul className="list-disc ml-6 text-gray-500">
-            {nutritionData[product.id].map((info, index) => (
-              <li key={index}>{info}</li>
-            ))}
+            {(nutritionData[product.id] || ["No nutrition info available"]).map(
+              (info, index) => (
+                <li key={index}>{info}</li>
+              )
+            )}
           </ul>
 
           {/* Quantity Control */}

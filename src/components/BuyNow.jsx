@@ -1,6 +1,7 @@
-// src/components/Buy.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../firebase"; // ✅ Correct import
 
 const Buy = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -14,16 +15,28 @@ const Buy = () => {
 
   const navigate = useNavigate();
 
-  // Farmer Data with Location Coordinates
+  // Farmer Data with Location Coordinates and Phone Number
   const farmerData = {
-    1: { name: "Ramesh Patil", location: "19.9975,73.7898" }, // Nashik
-    2: { name: "Sunil Sharma", location: "18.5204,73.8567" }, // Pune
-    3: { name: "Manoj Verma", location: "28.6139,77.2090" }, // Delhi
-    4: { name: "Aarti Singh", location: "26.9124,75.7873" }, // Jaipur
-    5: { name: "Sanjay Deshmukh", location: "22.7196,75.8577" }, // Indore
-    6: { name: "Preeti Yadav", location: "12.9716,77.5946" }, // Bengaluru
-    7: { name: "Kishore Kumar", location: "23.0225,72.5714" }, // Ahmedabad
-    8: { name: "Pooja Pandey", location: "13.0827,80.2707" }, // Chennai
+    1: {
+      name: "Ramesh Patil",
+      location: "19.9975,73.7898",
+      phone: "9876543210",
+    },
+    2: {
+      name: "Sunil Sharma",
+      location: "18.5204,73.8567",
+      phone: "9123456789",
+    },
+    3: {
+      name: "Manoj Verma",
+      location: "28.6139,77.2090",
+      phone: "9988776655",
+    },
+    4: {
+      name: "Aarti Singh",
+      location: "26.9124,75.7873",
+      phone: "8901234567",
+    },
   };
 
   // Load Product Details
@@ -48,9 +61,34 @@ const Buy = () => {
     setSelectedPayment(method);
   };
 
+  // Send Order Data to Firestore
+  const sendOrderToFirestore = async (trackingLink) => {
+    const farmerInfo = farmerData[selectedProduct.id];
+
+    const orderData = {
+      productName: selectedProduct.name,
+      farmerName: farmerInfo.name,
+      farmerPhone: farmerInfo.phone,
+      trackingLink: trackingLink,
+      customerName: formData.name,
+      address: formData.address,
+      pincode: formData.pincode,
+      paymentMethod: selectedPayment,
+      timestamp: new Date(),
+    };
+
+    try {
+      await addDoc(collection(db, "orders"), orderData);
+      console.log("✅ Order stored in Firestore!");
+    } catch (error) {
+      console.error("❗ Error saving order:", error);
+    }
+  };
+
   // Proceed to Payment
-  const proceedToPayment = () => {
+  const proceedToPayment = async () => {
     const { name, address, pincode } = formData;
+
     if (!selectedPayment) {
       alert("💳 Please select a payment method!");
       return;
@@ -59,28 +97,33 @@ const Buy = () => {
       alert("📍 Please fill out all the delivery details.");
       return;
     }
+
     alert(`✅ Payment Successful via ${selectedPayment.toUpperCase()}!`);
     setOrderPlaced(true);
+
+    // Track Order and Send Notification
+    trackOrder(address, pincode);
   };
 
-  // Track Order with Google Maps Directions
-  const trackOrder = () => {
-    const { address, pincode } = formData;
-
-    // Get Farmer Location (Source)
-    const farmerLocation = farmerData[selectedProduct.id]?.location;
+  // Track Order and Generate Google Maps Link
+  const trackOrder = async (address, pincode) => {
+    const farmerInfo = farmerData[selectedProduct.id];
+    const farmerLocation = farmerInfo?.location;
 
     if (!farmerLocation) {
       alert("🚜 Farmer's location not found.");
       return;
     }
 
-    // Create Google Maps Direction URL
+    // Generate Google Maps Tracking Link
     const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${farmerLocation}&destination=${encodeURIComponent(
       address + ", " + pincode
     )}`;
 
-    // Open Google Maps in New Tab
+    // Save Order Details to Firestore
+    await sendOrderToFirestore(googleMapsUrl);
+
+    // Open Google Maps
     window.open(googleMapsUrl, "_blank");
   };
 
@@ -175,7 +218,7 @@ const Buy = () => {
         <div className="flex justify-center mt-6">
           <button
             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg"
-            onClick={trackOrder}
+            onClick={() => trackOrder(formData.address, formData.pincode)}
           >
             📡 Track Your Order
           </button>
